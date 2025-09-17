@@ -16,7 +16,7 @@ dotenv.config();
 const app = express();
 
 app.use(limiter)
-const allowedOrigins = ['https://ramos-client.onrender.com'];
+const allowedOrigins = ['https://readwrite-quiz-client.onrender.com/'];
 
 app.use(
   cors({
