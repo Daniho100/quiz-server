@@ -15,7 +15,7 @@ dotenv.config();
 const app = express();
 
 app.use(limiter)
-const allowedOrigins = ['https://readwrite-quiz-client.onrender.com/'];
+const allowedOrigins = ['https://readwrite-quiz-client.onrender.com/api'];
 
 
 app.use(
