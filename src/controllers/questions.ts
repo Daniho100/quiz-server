@@ -4,14 +4,20 @@ import { validationResult } from 'express-validator';
 
 export const getQuestions = async (req: Request, res: Response) => {
   try {
-    const result = await pool.query('SELECT * FROM questions WHERE created_by = $1', [
-      (req as any).user.id,
-    ]);
+    const user = (req as any).user;
+
+    if (user.role !== "admin") {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    const result = await pool.query("SELECT * FROM questions");
     res.json(result.rows);
   } catch (error) {
-    res.status(500).json({ message: 'Server error' });
+    console.error("❌ getQuestions error:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };
+
 
 export const createQuestion = async (req: Request, res: Response) => {
   try {

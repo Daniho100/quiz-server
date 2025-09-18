@@ -6,7 +6,7 @@ dotenv.config();
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false },
-  max: 5,                        // max clients in pool
+  max: 20,                        // max clients in pool
   idleTimeoutMillis: 60000,       // remove idle clients after 60s
   connectionTimeoutMillis: 20000, // wait up to 20s for a connection
   keepAlive: true

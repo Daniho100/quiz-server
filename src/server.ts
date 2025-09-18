@@ -7,7 +7,7 @@ import questionRoutes from './routes/questions';
 import quizRoutes from './routes/quiz';
 import helmet from 'helmet'
 import morgan from 'morgan'
-// import mongoSanitize from 'express-mongo-sanitize';
+
 
 
 dotenv.config();
@@ -15,7 +15,7 @@ const app = express();
 
 app.use(limiter)
 app.use(cors())
-const allowedOrigins = ["https://readwrite-quiz-client.onrender.com"];
+const allowedOrigins = ["https://readwrite-quiz-client.onrender.com", 'http://localhost:5173'];
 app.use(
   cors({
     origin: (origin, callback) => {
@@ -39,7 +39,6 @@ app.options("/*all", cors());
 
 app.use(helmet({contentSecurityPolicy: false,}));
 app.use(morgan('dev'))
-// app.use(mongoSanitize());
 app.use(express.json());
 
 app.use('/api/auth', authRoutes);

@@ -1,42 +1,5 @@
 "use strict";
-// import { Router } from 'express';
-// import { register, login, updateUserRole } from '../controllers/auth';
-// import { body } from 'express-validator';
-// import { authMiddleware } from '../middleware/auth';
 Object.defineProperty(exports, "__esModule", { value: true });
-// const router = Router();
-// router.patch('/:id/role', authMiddleware, updateUserRole);
-// router.post(
-//   "/register",
-//   [
-//     body("name")
-//       .trim()
-//       .isLength({ min: 2 })
-//       .withMessage("Name must be at least 2 characters long"),
-//     body("email")
-//       .isEmail()
-//       .normalizeEmail()
-//       .withMessage("Please provide a valid email"),
-//     body("password")
-//       .isLength({ min: 6 })
-//       .withMessage("Password must be at least 6 characters long"),
-//   ],
-//   register
-// );
-// router.post(
-//   '/login',
-//   [
-//     body("email")
-//       .isEmail()
-//       .normalizeEmail()
-//       .withMessage("Please provide a valid email"),
-//     body("password")
-//       .isLength({ min: 6 })
-//       .withMessage("Password must be at least 6 characters long"),
-//   ],
-//   login
-// );
-// export default router;
 const express_1 = require("express");
 const auth_1 = require("../controllers/auth");
 const express_validator_1 = require("express-validator");

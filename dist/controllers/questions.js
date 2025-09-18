@@ -8,13 +8,16 @@ const db_1 = __importDefault(require("../utils/db"));
 const express_validator_1 = require("express-validator");
 const getQuestions = async (req, res) => {
     try {
-        const result = await db_1.default.query('SELECT * FROM questions WHERE created_by = $1', [
-            req.user.id,
-        ]);
+        const user = req.user;
+        if (user.role !== "admin") {
+            return res.status(403).json({ message: "Access denied" });
+        }
+        const result = await db_1.default.query("SELECT * FROM questions");
         res.json(result.rows);
     }
     catch (error) {
-        res.status(500).json({ message: 'Server error' });
+        console.error("❌ getQuestions error:", error);
+        res.status(500).json({ message: "Server error" });
     }
 };
 exports.getQuestions = getQuestions;

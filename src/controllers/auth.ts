@@ -115,33 +115,58 @@ import pool from '../utils/db';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
+// export const register = async (req: Request, res: Response) => {
+//   try {
+//     const { name, email, password } = req.body;
+
+//     const user = await retry(async () => {
+//       const hashed = await bcrypt.hash(password, 10);
+//       const { rows } = await pool.query(
+//         'INSERT INTO users(name, email, password, role) VALUES($1, $2, $3, $4) RETURNING id, name, email, role',
+//         [name, email, hashed, 'user']
+//       );
+//       if (!rows.length) throw new Error('Failed to create user');
+//       return rows[0];
+//     }, { retries: 3, minTimeout: 1000 });
+
+//     res.status(201).json({ user });
+//   } catch (error: any) {
+//     console.error('register error:', error);
+//     res.status(500).json({ message: 'Server error', detail: error.message });
+//   }
+// };
+
+
 export const register = async (req: Request, res: Response) => {
+  const client = await pool.connect(); // get a client from the pool
   try {
     const { name, email, password } = req.body;
 
-    const user = await retry(async () => {
-      const hashed = await bcrypt.hash(password, 10);
-      const { rows } = await pool.query(
-        'INSERT INTO users(name, email, password) VALUES($1, $2, $3) RETURNING id, name, email',
-        [name, email, hashed, 'user']
-      );
-      if (!rows.length) throw new Error('Failed to create user');
-      return rows[0];
-    }, { retries: 3, minTimeout: 1000 });
+    const hashed = await bcrypt.hash(password, 10);
 
-    res.status(201).json({ user });
+    const { rows } = await client.query(
+      'INSERT INTO users(name, email, password, role) VALUES($1, $2, $3, $4) RETURNING id, name, email, role',
+      [name, email, hashed, 'user']
+    );
+
+    if (!rows.length) throw new Error('Failed to create user');
+
+    res.status(201).json({ user: rows[0] });
   } catch (error: any) {
     console.error('❌ register error:', error);
     res.status(500).json({ message: 'Server error', detail: error.message });
+  } finally {
+    client.release(); 
   }
 };
 
 export const login = async (req: Request, res: Response) => {
+  const client = await pool.connect();
   try {
     const { email, password } = req.body;
 
     const user = await retry(async () => {
-      const { rows } = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+      const { rows } = await client.query('SELECT * FROM users WHERE email = $1', [email]);
       if (!rows.length) throw new Error('Invalid credentials');
       return rows[0];
     }, { retries: 3, minTimeout: 1000 });
@@ -149,22 +174,30 @@ export const login = async (req: Request, res: Response) => {
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) return res.status(401).json({ message: 'Invalid credentials' });
 
-    const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET!, { expiresIn: '1h' });
+    const token = jwt.sign(
+      { id: user.id, role: user.role },
+      process.env.JWT_SECRET!,
+      { expiresIn: '1h' }
+    );
 
-    res.json({ user: { id: user.id, name: user.name, email: user.email }, token });
+    res.json({ user: { id: user.id, name: user.name, email: user.email, role: user.role }, token });
   } catch (error: any) {
     console.error('❌ login error:', error);
     res.status(500).json({ message: 'Server error', detail: error.message });
+  } finally {
+    client.release();
   }
 };
 
+
 export const updateUserRole = async (req: Request, res: Response) => {
+  const client = await pool.connect();
   try {
     const { id } = req.params;
     const { role } = req.body;
 
     const updatedUser = await retry(async () => {
-      const { rows } = await pool.query(
+      const { rows } = await client.query(
         'UPDATE users SET role = $1 WHERE id = $2 RETURNING id, name, email, role',
         [role, id]
       );
@@ -176,5 +209,10 @@ export const updateUserRole = async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error('❌ updateUserRole error:', error);
     res.status(500).json({ message: 'Server error', detail: error.message });
+  } finally {
+    client.release();
   }
 };
+
+
+

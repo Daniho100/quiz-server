@@ -1,6 +1,4 @@
 "use strict";
-// middleware/admin.ts
-// import { Request, Response, NextFunction } from "express";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.adminMiddleware = void 0;
 const adminMiddleware = (req, res, next) => {

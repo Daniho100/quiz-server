@@ -12,12 +12,11 @@ const questions_1 = __importDefault(require("./routes/questions"));
 const quiz_1 = __importDefault(require("./routes/quiz"));
 const helmet_1 = __importDefault(require("helmet"));
 const morgan_1 = __importDefault(require("morgan"));
-// import mongoSanitize from 'express-mongo-sanitize';
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 app.use(rateLimiter_1.default);
 app.use((0, cors_1.default)());
-const allowedOrigins = ["https://readwrite-quiz-client.onrender.com"];
+const allowedOrigins = ["https://readwrite-quiz-client.onrender.com", 'http://localhost:5173'];
 app.use((0, cors_1.default)({
     origin: (origin, callback) => {
         if (!origin)
@@ -38,7 +37,6 @@ app.use((0, cors_1.default)({
 app.options("/*all", (0, cors_1.default)());
 app.use((0, helmet_1.default)({ contentSecurityPolicy: false, }));
 app.use((0, morgan_1.default)('dev'));
-// app.use(mongoSanitize());
 app.use(express_1.default.json());
 app.use('/api/auth', auth_1.default);
 app.use('/api/questions', questions_1.default);
