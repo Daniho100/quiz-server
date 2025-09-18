@@ -1,55 +1,72 @@
 "use strict";
+// import { Request, Response } from 'express';
+// import bcrypt from 'bcrypt';
+// import jwt from 'jsonwebtoken';
+// import pool from '../utils/db';
+// import { validationResult } from 'express-validator';
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.login = exports.register = void 0;
+exports.updateUserRole = exports.login = exports.register = void 0;
+const async_retry_1 = __importDefault(require("async-retry"));
+const db_1 = __importDefault(require("../utils/db"));
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const db_1 = __importDefault(require("../utils/db"));
-const express_validator_1 = require("express-validator");
 const register = async (req, res) => {
     try {
-        const errors = (0, express_validator_1.validationResult)(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
-        }
-        const { email, password } = req.body;
-        const hashedPassword = await bcrypt_1.default.hash(password, 10);
-        const result = await db_1.default.query('INSERT INTO users (email, password) VALUES ($1, $2) RETURNING id, email', [email, hashedPassword]);
-        const token = jsonwebtoken_1.default.sign({ id: result.rows[0].id }, process.env.JWT_SECRET, {
-            expiresIn: '1h',
-        });
-        res.status(201).json({ token, user: result.rows[0] });
+        const { name, email, password } = req.body;
+        const user = await (0, async_retry_1.default)(async () => {
+            const hashed = await bcrypt_1.default.hash(password, 10);
+            const { rows } = await db_1.default.query('INSERT INTO users(name, email, password) VALUES($1, $2, $3) RETURNING id, name, email', [name, email, hashed, 'user']);
+            if (!rows.length)
+                throw new Error('Failed to create user');
+            return rows[0];
+        }, { retries: 3, minTimeout: 1000 });
+        res.status(201).json({ user });
     }
     catch (error) {
-        res.status(500).json({ message: 'Server error' });
+        console.error('❌ register error:', error);
+        res.status(500).json({ message: 'Server error', detail: error.message });
     }
 };
 exports.register = register;
 const login = async (req, res) => {
     try {
-        const errors = (0, express_validator_1.validationResult)(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
-        }
         const { email, password } = req.body;
-        const result = await db_1.default.query('SELECT * FROM users WHERE email = $1', [email]);
-        if (result.rows.length === 0) {
+        const user = await (0, async_retry_1.default)(async () => {
+            const { rows } = await db_1.default.query('SELECT * FROM users WHERE email = $1', [email]);
+            if (!rows.length)
+                throw new Error('Invalid credentials');
+            return rows[0];
+        }, { retries: 3, minTimeout: 1000 });
+        const valid = await bcrypt_1.default.compare(password, user.password);
+        if (!valid)
             return res.status(401).json({ message: 'Invalid credentials' });
-        }
-        const user = result.rows[0];
-        const isMatch = await bcrypt_1.default.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(401).json({ message: 'Invalid credentials' });
-        }
-        const token = jsonwebtoken_1.default.sign({ id: user.id }, process.env.JWT_SECRET, {
-            expiresIn: '1h',
-        });
-        res.json({ token, user: { id: user.id, email: user.email } });
+        const token = jsonwebtoken_1.default.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        res.json({ user: { id: user.id, name: user.name, email: user.email }, token });
     }
     catch (error) {
-        res.status(500).json({ message: 'Server error' });
+        console.error('❌ login error:', error);
+        res.status(500).json({ message: 'Server error', detail: error.message });
     }
 };
 exports.login = login;
+const updateUserRole = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { role } = req.body;
+        const updatedUser = await (0, async_retry_1.default)(async () => {
+            const { rows } = await db_1.default.query('UPDATE users SET role = $1 WHERE id = $2 RETURNING id, name, email, role', [role, id]);
+            if (!rows.length)
+                throw new Error('User not found');
+            return rows[0];
+        }, { retries: 3, minTimeout: 1000 });
+        res.json({ user: updatedUser });
+    }
+    catch (error) {
+        console.error('❌ updateUserRole error:', error);
+        res.status(500).json({ message: 'Server error', detail: error.message });
+    }
+};
+exports.updateUserRole = updateUserRole;

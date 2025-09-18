@@ -1,17 +1,26 @@
 "use strict";
+// import { Request, Response } from 'express';
+// import pool from '../utils/db';
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.submitQuiz = exports.startQuiz = void 0;
+const async_retry_1 = __importDefault(require("async-retry"));
 const db_1 = __importDefault(require("../utils/db"));
 const startQuiz = async (req, res) => {
     try {
-        const result = await db_1.default.query('SELECT * FROM questions');
-        res.json(result.rows);
+        const questions = await (0, async_retry_1.default)(async () => {
+            const { rows } = await db_1.default.query('SELECT * FROM questions ORDER BY RANDOM() LIMIT 10');
+            if (!rows.length)
+                throw new Error('No questions found');
+            return rows;
+        }, { retries: 3, minTimeout: 1000 });
+        res.json(questions);
     }
     catch (error) {
-        res.status(500).json({ message: 'Server error' });
+        console.error('❌ startQuiz error:', error);
+        res.status(500).json({ message: 'Server error', detail: error.message });
     }
 };
 exports.startQuiz = startQuiz;
@@ -26,7 +35,7 @@ const submitQuiz = async (req, res) => {
                 score += 1;
                 correctCount += 1;
             }
-        });
+        }, { retries: 3, minTimeout: 1000 });
         res.json({
             totalScore: score,
             correctAnswers: correctCount,
