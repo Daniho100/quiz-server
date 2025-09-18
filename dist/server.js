@@ -32,6 +32,7 @@ app.use((0, cors_1.default)({
     preflightContinue: false,
     optionsSuccessStatus: 200,
 }));
+app.options("*", (0, cors_1.default)());
 app.use((0, helmet_1.default)({ contentSecurityPolicy: false, }));
 app.use((0, morgan_1.default)('dev'));
 // app.use(mongoSanitize());
