@@ -14,26 +14,27 @@ dotenv.config();
 const app = express();
 
 app.use(limiter)
-const allowedOrigins = ['https://readwrite-quiz-client.onrender.com'];
-
-
+const allowedOrigins = ["https://readwrite-quiz-client.onrender.com"];
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
       } else {
-        callback(new Error("Not allowed by CORS"));
+        return callback(new Error("Not allowed by CORS"));
       }
     },
-    credentials: true, 
+    credentials: true,
     methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
-    preflightContinue: false, 
-    optionsSuccessStatus: 200,
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
   })
 );
 
+app.options("/*", cors());
 
 app.use(helmet({contentSecurityPolicy: false,}));
 app.use(morgan('dev'))

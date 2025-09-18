@@ -16,22 +16,25 @@ const morgan_1 = __importDefault(require("morgan"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 app.use(rateLimiter_1.default);
-const allowedOrigins = ['https://readwrite-quiz-client.onrender.com/'];
+const allowedOrigins = ["https://readwrite-quiz-client.onrender.com"];
 app.use((0, cors_1.default)({
     origin: (origin, callback) => {
-        if (!origin || allowedOrigins.includes(origin)) {
-            callback(null, true);
+        if (!origin)
+            return callback(null, true);
+        if (allowedOrigins.includes(origin)) {
+            return callback(null, true);
         }
         else {
-            callback(new Error("Not allowed by CORS"));
+            return callback(new Error("Not allowed by CORS"));
         }
     },
     credentials: true,
     methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     preflightContinue: false,
-    optionsSuccessStatus: 200,
+    optionsSuccessStatus: 204,
 }));
+app.options("/*", (0, cors_1.default)());
 app.use((0, helmet_1.default)({ contentSecurityPolicy: false, }));
 app.use((0, morgan_1.default)('dev'));
 // app.use(mongoSanitize());
