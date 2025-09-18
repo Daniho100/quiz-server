@@ -123,7 +123,7 @@ export const register = async (req: Request, res: Response) => {
       const hashed = await bcrypt.hash(password, 10);
       const { rows } = await pool.query(
         'INSERT INTO users(name, email, password) VALUES($1, $2, $3) RETURNING id, name, email',
-        [name, email, hashed]
+        [name, email, hashed, 'user']
       );
       if (!rows.length) throw new Error('Failed to create user');
       return rows[0];
@@ -149,7 +149,7 @@ export const login = async (req: Request, res: Response) => {
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) return res.status(401).json({ message: 'Invalid credentials' });
 
-    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET!, { expiresIn: '1h' });
+    const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET!, { expiresIn: '1h' });
 
     res.json({ user: { id: user.id, name: user.name, email: user.email }, token });
   } catch (error: any) {

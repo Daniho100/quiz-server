@@ -70,15 +70,28 @@ export const updateQuestion = async (req: Request, res: Response) => {
 export const deleteQuestion = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const result = await pool.query(
-      'DELETE FROM questions WHERE id = $1 AND created_by = $2 RETURNING *',
-      [id, (req as any).user.id]
-    );
+   const user = (req as any).user; // bypasses TS checks
+
+    let result;
+
+    if (user.role === 'admin') {
+      // Admin can delete any question
+      result = await pool.query('DELETE FROM questions WHERE id = $1 RETURNING *', [id]);
+    } else {
+      // Normal user can delete only their own questions
+      result = await pool.query(
+        'DELETE FROM questions WHERE id = $1 AND created_by = $2 RETURNING *',
+        [id, user.id]
+      );
+    }
+
     if (result.rows.length === 0) {
       return res.status(404).json({ message: 'Question not found' });
     }
+
     res.json({ message: 'Question deleted' });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: 'Server error' });
   }
 };

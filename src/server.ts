@@ -7,8 +7,7 @@ import questionRoutes from './routes/questions';
 import quizRoutes from './routes/quiz';
 import helmet from 'helmet'
 import morgan from 'morgan'
-const xss = require('xss-clean');
-import mongoSanitize from 'express-mongo-sanitize';
+// import mongoSanitize from 'express-mongo-sanitize';
 
 
 
@@ -36,8 +35,7 @@ app.use(
 
 app.use(helmet({contentSecurityPolicy: false,}));
 app.use(morgan('dev'))
-app.use(xss());
-app.use(mongoSanitize());
+// app.use(mongoSanitize());
 app.use(express.json());
 
 app.use('/api/auth', authRoutes);

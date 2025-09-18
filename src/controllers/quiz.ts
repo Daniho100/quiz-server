@@ -52,29 +52,35 @@ export const startQuiz = async (req: Request, res: Response) => {
       return rows;
     }, { retries: 3, minTimeout: 1000 });
 
-    res.json({ questions });
+    res.json(questions);
   } catch (error: any) {
     console.error('❌ startQuiz error:', error);
     res.status(500).json({ message: 'Server error', detail: error.message });
   }
 };
 
+
+
 export const submitQuiz = async (req: Request, res: Response) => {
   try {
-    const { answers } = req.body;
+    const answers = req.body; // { questionId: selectedOption }
+    const result = await pool.query('SELECT id, correct_option FROM questions');
+    let score = 0;
+    let correctCount = 0;
 
-    const result = await retry(async () => {
-      const { rows } = await pool.query(
-        'INSERT INTO quiz_results(user_id, answers) VALUES($1, $2) RETURNING *',
-        [(req as any).user.id, JSON.stringify(answers)]
-      );
-      if (!rows.length) throw new Error('Failed to save quiz');
-      return rows[0];
-    }, { retries: 3, minTimeout: 1000 });
+    result.rows.forEach((question) => {
+      if (answers[question.id] === question.correct_option) {
+        score += 1;
+        correctCount += 1;
+      }
+    },{ retries: 3, minTimeout: 1000 });
 
-    res.json({ result });
-  } catch (error: any) {
-    console.error('❌ submitQuiz error:', error);
-    res.status(500).json({ message: 'Server error', detail: error.message });
+    res.json({
+      totalScore: score,
+      correctAnswers: correctCount,
+      totalQuestions: result.rows.length,
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
   }
-};
+}
