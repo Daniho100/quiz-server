@@ -35,7 +35,7 @@ app.use(
   })
 );
 
-app.options("/*", cors());
+app.options("/*all", cors());
 
 app.use(helmet({contentSecurityPolicy: false,}));
 app.use(morgan('dev'))
