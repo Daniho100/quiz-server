@@ -16,7 +16,7 @@ const morgan_1 = __importDefault(require("morgan"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 app.use(rateLimiter_1.default);
-const allowedOrigins = ['https://readwrite-quiz-client.onrender.com/api'];
+const allowedOrigins = ['https://readwrite-quiz-client.onrender.com/'];
 app.use((0, cors_1.default)({
     origin: (origin, callback) => {
         if (!origin || allowedOrigins.includes(origin)) {

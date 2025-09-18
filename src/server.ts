@@ -10,12 +10,11 @@ import morgan from 'morgan'
 // import mongoSanitize from 'express-mongo-sanitize';
 
 
-
 dotenv.config();
 const app = express();
 
 app.use(limiter)
-const allowedOrigins = ['https://readwrite-quiz-client.onrender.com/api'];
+const allowedOrigins = ['https://readwrite-quiz-client.onrender.com/'];
 
 
 app.use(
